@@ -12,10 +12,17 @@ eTaskState Task2State;
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 32 // OLED display height, in pixels
 
+#define SDA 2
+#define SCL 15
+
 
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3c ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+TwoWire i2c = TwoWire(0);
+
+//Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,&i2c , OLED_RESET);
+Adafruit_SSD1306 display;
 BluetoothA2DPSink a2dp_sink;
 
 String title="";
@@ -70,30 +77,13 @@ void drawBitLogo(void) {
     delay(1000);
 }
 
-void drawDetails(String title, String artist) {
-  display.clearDisplay();
 
-  display.setTextSize(1);      // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE); // Draw white text
-  display.setCursor(GIF_WIDTH, 0);     // Start at top-left corner
-  display.cp437(true);         // Use full 256 char 'Code Page 437' font
-
-  // Not all the characters will fit on the display. This is normal.
-  // Library will draw what it can and the rest will be clipped.
-  
-
-
-  display.display();
-
-}
-
-
-
+ 
 void drawGif( void * pvParameters ){
     Serial.print("new Task2 running on core ");
     Serial.println(xPortGetCoreID());
 
-    for(;;){
+    for(;;){ 
             // Clear the buffer.
             display.clearDisplay();
             
@@ -155,28 +145,25 @@ void avrc_metadata_callback(uint8_t id, const uint8_t *text) {
 void setup() {
     Serial.begin(115200);
 
-    pinMode(5, OUTPUT);
-    digitalWrite(5, HIGH);
+    i2c.setPins(SDA,SCL);
+
+    display = Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, &i2c, OLED_RESET);
 
     // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
     if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
         Serial.println(F("SSD1306 allocation failed"));
         for(;;); // Don't proceed, loop forever
-    }
-
+    } 
     // Clear the buffer
     display.clearDisplay();
     delay(2000);
     drawBitLogo();    // Draw a small bitmap image
     delay(2000);
     
-
-
-    
     static const i2s_config_t i2s_config = {
         .mode = (i2s_mode_t) (I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_DAC_BUILT_IN),
         .sample_rate = 44100, // corrected by info from bluetooth
-        .bits_per_sample = (i2s_bits_per_sample_t) 16, // the DAC module will only take the 8bits from MSB 
+        .bits_per_sample = (i2s_bits_per_sample_t) 16, /* the DAC module will only take the 8bits from MSB */
         .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
         .communication_format = (i2s_comm_format_t)I2S_COMM_FORMAT_STAND_MSB,
         .intr_alloc_flags = 0, // default interrupt priority
@@ -185,7 +172,6 @@ void setup() {
         .use_apll = false
     };
 
-    a2dp_sink.set_avrc_metadata_callback(avrc_metadata_callback);
     a2dp_sink.set_i2s_config(i2s_config);
     a2dp_sink.start("BluetoothAudioLink");
 
