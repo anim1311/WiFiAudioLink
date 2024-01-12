@@ -1,10 +1,19 @@
-
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include "BluetoothA2DPSink.h"
 
+#include "SpotifyClient.h"
+#include "YoutubeClient.h"
+#include "Airplay.h"
+#include "WifiAuth.h"
+#include "WifiSink.h"
+#include "Schdueler.h"
+#include "PleaseWork.h" // :(
+#include "DidntWork.h" // :*(
+#include "LoadBinary.h"
+#include "OverTheAirMagic.h"
+#include "BluetoothA2DPSink.h"
 #include "gif.h"
 
 TaskHandle_t Task2;
